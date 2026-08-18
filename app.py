@@ -10,46 +10,56 @@
 # (e.g. book depreciation vs. tax depreciation).
 DIFFERENCES = [
     # Permanent / Unfavorable
-    {"name": "Federal income tax expense", "permanent": True, "favorable": False,
+    {"name": "Federal income tax expense", "permanent": True, "favorable": False, "formula": "direct",
      "inputs": ["Book expense amount (leave out commas): $"]},
-    {"name": "Fines and penalties", "permanent": True, "favorable": False,
+    {"name": "Fines and penalties", "permanent": True, "favorable": False, "formula": "direct",
      "inputs": ["Book expense amount (leave out commas): $"]},
-     {"name": "Life insurance premiums (beneficiary = corporation)","permanent": True, "favorable": False,
-      "inputs": ["Book expense amount (leave out commas): $"]},
+    {"name": "Life insurance premiums", "permanent": True, "favorable": False, "formula": "direct",  
+     "inputs": ["Book expense amount (leave out commas): $"]},
+    {"name": "Meals expense", "permanent": True, "favorable": False, "formula": "percentage",
+     "inputs": ["Book expense amount (leave out commas): $", "Meals expense percetange (enter .5): "]},
 
     # Permanent / Favorable
-    {"name": "Tax-exempt municipal bond interest", "permanent": True, "favorable": True,
+    {"name": "Tax-exempt municipal bond interest", "permanent": True, "favorable": True, "formula": "direct",
      "inputs": ["Book interest income (leave out commas): $"]},
-    {"name": "Dividends received deduction", "permanent": True, "favorable": True,
-     "inputs": ["Book dividend income (leave out commas): $"]},
-     {"name": " Death Benefit from life insurance","permanent": True, "favorable": True,
-      "inputs": ["Book income (leave out commas): $"]},
+    {"name": "Dividends received deduction", "permanent": True, "favorable": True, "formula": "percentage",
+     "inputs": ["Book dividend income (leave out commas): $", "DRD percentage (enter 0.5, 0.65, or 1): "]},
+    {"name": "Death Benefit from life insurance", "permanent": True, "favorable": True, "formula": "direct",
+     "inputs": ["Book income (leave out commas): $"]},
 
     # Temporary / Unfavorable (-> Deferred Tax Asset)
-    {"name": "Bad debt allowance (book) vs. write-off (tax)", "permanent": False, "favorable": False,
+    {"name": "Bad debt allowance (book) vs. write-off (tax)", "permanent": False, "favorable": False, "formula": "subtract",
      "inputs": ["Book bad debt expense (leave out commas): $", "Tax bad debt deduction (leave out commas): $"]},
-    {"name": "Accrued warranty expense", "permanent": False, "favorable": False,
+    {"name": "Accrued warranty expense", "permanent": False, "favorable": False, "formula": "subtract",
      "inputs": ["Book warranty expense (leave out commas): $", "Tax warranty deduction (leave out commas): $"]},
-     {"name": "Unearned rent revenue", "permanent": False, "favorable": False,
-      "inputs": ["Book expense amount (leave out commas): $", "Deductible portion of rent (leave out commas): $"]},
+    #{"name": "Unearned rent revenue", "permanent": False, "favorable": False, "formula": "subtract",
+     #"inputs": ["Book expense amount (leave out commas): $", "Deductible portion of rent (leave out commas): $"]},
 
     # Temporary / Favorable (-> Deferred Tax Liability)
-    {"name": "Tax depreciation exceeds book depreciation", "permanent": False, "favorable": True,
+    {"name": "Tax depreciation exceeds book depreciation", "permanent": False, "favorable": True, "formula": "subtract",
      "inputs": ["Book depreciation(leave out commas): $", "Tax depreciation(leave out commas): $"]},
-    {"name": "Installment sale gain deferred for tax", "permanent": False, "favorable": True,
+    {"name": "Installment sale gain deferred for tax", "permanent": False, "favorable": True, "formula": "subtract",
      "inputs": ["Book gain recognized(leave out commas): $", "Tax gain recognized(leave out commas): $"]},
-     {"name": "Like-kind exchange", "permanent" : False, "favorable": True,
-      "inputs": ["Book amount recognized (leave out commas): $", "Realized gain (or loss): $"]},
+    #{"name": "Like-kind exchange", "permanent": False, "favorable": True, "formula": "subtract",
+     #"inputs": ["Book amount recognized (leave out commas): $", "Realized gain (or loss): $"]},
 ]
 
 
 def get_difference_amount(item, values):
-    """Dollar size of the difference: the single entered value, or the gap
-    between the book figure and the tax figure for two-input items."""
-    if len(values) == 1:
+    """Dollar size of the difference, computed according to item["formula"]:
+    "direct" -- the entered value IS the difference (fully nondeductible/excluded items).
+    "subtract" -- the gap between a book figure and a tax figure.
+    "percentage" -- a book amount times a percentage (e.g. the DRD)."""
+    if item["formula"] == "direct":
         return values[0]
-    book, tax = values
-    return abs(book - tax)
+    if item["formula"] == "subtract":
+        book = values[0]
+        tax = values[1]
+        return abs(book - tax)
+    if item["formula"] == "percentage":
+        book = values[0]
+        pct = values[1]
+        return book * pct
 
 
 def get_signed_adjustment(item, amount):
@@ -88,7 +98,8 @@ def main():
         choice = int(input("\nEnter number: ")) - 1
         item = DIFFERENCES[choice]
 
-        values = [float(input(f"{label}: $")) for label in item["inputs"]]
+        values = [float(input(label)) for label in item["inputs"]]
+        print(values)
         amount = get_difference_amount(item, values)
 
         permanence = "Permanent" if item["permanent"] else "Temporary"
