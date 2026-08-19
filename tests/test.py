@@ -1,4 +1,4 @@
-"""Tests for the book-tax difference calculator's formulas in app.py.
+"""Tests for the book-tax difference calculator's formulas in calculations.py.
 
 Run directly with: python tests/test.py
 No pytest needed -- each test is a plain function that asserts; the runner
@@ -8,11 +8,12 @@ at the bottom calls them all and prints PASS/FAIL for each.
 import os
 import sys
 
-# app.py lives one directory up from this file, so add the repo root to the
-# import path before importing it.
+# calculations.py and differences.py live one directory up from this file,
+# so add the repo root to the import path before importing them.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import DIFFERENCES, get_difference_amount, get_signed_adjustment, get_deferred_tax
+from src.calculations import get_difference_amount, get_signed_adjustment, get_deferred_tax
+from src.differences import DIFFERENCES
 
 
 def find_item(name):
